@@ -11,7 +11,8 @@ load_dotenv()
 
 # Scraper function
 def scrape_hackathons(location_filter):
-    url = "https://mlh.io/seasons/2024/events"
+    url = "https://devpost.com/hackathons?search=south+africa"
+
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
     
@@ -53,9 +54,9 @@ def send_email(hackathons):
         print(f"Error sending email: {e}")
 
 if __name__ == "__main__":
-    location_filter = input("Enter location filter: ")
+    location_filter = input("South Africa")
     hackathons = scrape_hackathons(location_filter)
     if hackathons:
         send_email(hackathons)
     else:
-        print("No hackathons found for the specified location.")
+        print("No hackathons found for South Africa.")
