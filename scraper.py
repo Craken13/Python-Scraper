@@ -11,9 +11,16 @@ load_dotenv()
 
 # Scraper function
 def scrape_hackathons(location_filter):
-    url = "https://devpost.com/hackathons?search=south+africa"
+    location_filter = location_filter.replace(' ', '+')
+    url = f"https://devpost.com/hackathons?search={location_filter}"
 
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data: {e}")
+        return []
+    
     soup = BeautifulSoup(response.text, 'html.parser')
     
     hackathons = []
@@ -34,6 +41,10 @@ def send_email(hackathons):
     receiver_email = os.getenv("EMAIL_RECEIVER")
     password = os.getenv("EMAIL_PASSWORD")
     
+    if not sender_email or not receiver_email or not password:
+        print("Email credentials are not set properly.")
+        return
+    
     subject = "Upcoming Hackathons!"
     body = "\n".join(hackathons)
     
@@ -45,18 +56,17 @@ def send_email(hackathons):
     msg.attach(MIMEText(body, 'plain'))
     
     try:
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
-            server.starttls()
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(sender_email, password)
             server.sendmail(sender_email, receiver_email, msg.as_string())
         print("Email sent successfully!")
-    except Exception as e:
+    except smtplib.SMTPException as e:
         print(f"Error sending email: {e}")
 
 if __name__ == "__main__":
-    location_filter = input("South Africa")
+    location_filter = "Cape Town"  # Specify the location here
     hackathons = scrape_hackathons(location_filter)
     if hackathons:
         send_email(hackathons)
     else:
-        print("No hackathons found for South Africa.")
+        print(f"No hackathons found for {location_filter}.")
